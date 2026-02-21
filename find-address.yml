@@ -1,0 +1,43 @@
+name: Find Address
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Name to search (e.g., smith)'
+        required: true
+        default: 'smith'
+  push:
+    branches:
+      - main
+
+jobs:
+  find-address:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run find_address script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ ! -f ./find_address.js ]; then
+            echo "Error: find_address.js not found in repository root."
+            exit 1
+          fi
+          echo "Searching for name: ${{ github.event.inputs.name }}"
+          node ./find_address.js "${{ github.event.inputs.name }}"
